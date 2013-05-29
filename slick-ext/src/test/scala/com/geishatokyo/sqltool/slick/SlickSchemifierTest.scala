@@ -1,8 +1,15 @@
 package com.geishatokyo.sqltool.slick
 
 import org.specs2.mutable.Specification
-import scala.slick.driver.MySQLDriver.simple._
 import java.util.Properties
+import slick.session.Database
+import slick.driver.ExtendedProfile
+
+object Driver{
+  val driver : ExtendedProfile = scala.slick.driver.MySQLDriver
+}
+
+import Driver.driver.simple._
 
 /**
  * 

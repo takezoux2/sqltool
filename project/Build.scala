@@ -11,6 +11,12 @@ object SQLToolBuild extends Build{
     state
   })
 
+  def publishAll = Command.command("publishAll")( state => {
+    Command.process("publish",Command.process("project sqltool",state))
+    Command.process("publish",Command.process("project sqltool-slick-ext",state))
+    state
+  })
+
 
   override lazy val settings = super.settings ++ org.sbtidea.SbtIdeaPlugin.settings ++ Seq(
   	organization := "com.geishatokyo",
@@ -24,7 +30,7 @@ object SQLToolBuild extends Build{
     base = file("."),
     settings = Project.defaultSettings ++ settings ++ Seq(
       libraryDependencies ++= List("org.specs2" %% "specs2" % "1.14" % "test"),
-      commands ++= Seq(testAllProject)
+      commands ++= Seq(testAllProject,publishAll)
     )
   )
 
@@ -38,6 +44,8 @@ object SQLToolBuild extends Build{
       )
     )
   ) dependsOn(root)
+
+
 
 }
 

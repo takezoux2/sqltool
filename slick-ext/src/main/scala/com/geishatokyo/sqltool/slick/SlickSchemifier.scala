@@ -5,9 +5,8 @@ import Database.threadLocalSession
 import scala.slick.jdbc.{GetResult, StaticQuery => Q}
 import scala.slick.jdbc.StaticQuery.interpolation
 
-import scala.slick.driver.MySQLDriver.simple._
 import com.geishatokyo.sqltool.mysql.{SQLGenerator, Diff, CreateTableParser}
-
+import slick.driver.MySQLDriver.simple._
 
 /**
  * 
@@ -38,7 +37,9 @@ class SlickSchemifier(db : Database) {
     }
   }
 
-  def schemify( tables : Table[_]*) = {
+  def schemify( _tables : AnyRef*) = {
+
+    val tables = _tables.map(_.asInstanceOf[slick.driver.MySQLDriver.simple.Table[_]])
 
     db.withSession{
       val tablesOnDb = showTables.map(_.toLowerCase)
