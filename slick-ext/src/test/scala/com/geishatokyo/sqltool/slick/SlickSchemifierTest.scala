@@ -2,6 +2,7 @@ package com.geishatokyo.sqltool.slick
 
 import org.specs2.mutable.Specification
 import scala.slick.driver.MySQLDriver.simple._
+import java.util.Properties
 
 /**
  * 
@@ -10,11 +11,15 @@ import scala.slick.driver.MySQLDriver.simple._
  */
 class SlickSchemifierTest extends Specification {
 
-  lazy val db = Database.forURL(
-    "jdbc:mysql://localhost/sqltool_test",
+  lazy val db = {
+    val p = new Properties()
+    p.load(getClass.getClassLoader.getResourceAsStream("dbsetting.properties"))
+    Database.forURL(
+    p.get("mysql.url").toString,
     driver = "com.mysql.jdbc.Driver",
-    user = "",
-    password = "")
+    user = p.get("mysql.user").toString,
+    password = p.get("mysql.password").toString)
+  }
 
 
   lazy val schemifier = new SlickSchemifier(db)
@@ -22,11 +27,13 @@ class SlickSchemifierTest extends Specification {
 
   "Schemifier" should{
 
+    schemifier.dropAllTables()
+
     "Create tables" in{
 
-      schemifier.schemify(OldUserTable)
+      schemifier.schemify(OldUserTable) must_==(SchemifyResult(List("MyTable"),Nil))
 
-      schemifier.schemify(NewUserTable)
+      schemifier.schemify(NewUserTable) must_==(SchemifyResult(Nil,List("MyTable")))
     }
 
 

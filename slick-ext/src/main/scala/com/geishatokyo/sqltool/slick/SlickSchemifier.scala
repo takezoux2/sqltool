@@ -20,12 +20,22 @@ class SlickSchemifier(db : Database) {
   def log(string : String) = println(string)
   def logSql(sql : String) = println(sql)
 
-  def showTables : List[String] = {
+  var permitAlterTable = true
+
+  private def showTables : List[String] = {
     Q.query[Unit,String]("SHOW TABLES;").list()
   }
 
-  def showCreateTable(tableName : String) : Option[String] = {
+  private def showCreateTable(tableName : String) : Option[String] = {
     Q.query[Unit,(String,String)]("SHOW CREATE TABLE " + tableName + ";").list().headOption.map(_._2)
+  }
+
+  def dropAllTables() = {
+    db.withSession{
+      showTables.foreach(tn => {
+        Q.update[Unit]("DROP TABLE IF EXISTS " + tn + ";").execute()
+      })
+    }
   }
 
   def schemify( tables : Table[_]*) = {
@@ -41,29 +51,34 @@ class SlickSchemifier(db : Database) {
         })
         t.ddl.create
       }
+      if(permitAlterTable){
+        for(t <- exists){
+          val onDb = CreateTableParser(showCreateTable(t.tableName).get)
+          val newTable = CreateTableParser(t.ddl.createStatements.next())
 
-      for(t <- exists){
-        val onDb = CreateTableParser(showCreateTable(t.tableName).get)
-        val newTable = CreateTableParser(t.ddl.createStatements.next())
+          val diff = Diff.diff(onDb,newTable)
 
-        val diff = Diff.diff(onDb,newTable)
+          log("Diff:" + diff)
 
-        log("Diff:" + diff)
+          if (diff.columnToAdd.size == 0){
+            log("No changes on " + t.tableName)
+          }else{
+            log("Alter talbe " + t.tableName)
+          }
 
-        if (diff.columnToAdd.size == 0){
-          log("No changes on " + t.tableName)
-        }else{
-          log("Alter talbe " + t.tableName)
+          if (diff.columnToAdd.size > 0){
+            diff.columnToAdd.foreach(c => {
+              val sql = SQLGenerator.createAddColumn(t.tableName,c)
+              logSql(sql)
+              Q.query[Unit,String](sql).execute()
+            })
+          }
+
         }
 
-        if (diff.columnToAdd.size > 0){
-          diff.columnToAdd.foreach(c => {
-            val sql = SQLGenerator.createAddColumn(t.tableName,c)
-            logSql(sql)
-            Q.query[Unit,String](sql).execute()
-          })
-        }
-
+        SchemifyResult(notExists.map(_.tableName).toList,exists.map(_.tableName).toList)
+      }else{
+        SchemifyResult(notExists.map(_.tableName).toList,Nil)
       }
 
 
@@ -76,3 +91,5 @@ class SlickSchemifier(db : Database) {
 
 
 }
+
+case class SchemifyResult(creates : List[String], alters : List[String])
