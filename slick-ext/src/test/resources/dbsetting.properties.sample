@@ -1,0 +1,3 @@
+mysql.url=jdbc:mysql://localhost/sqltool_test
+mysql.user=sqltool
+mysql.password=sqltool

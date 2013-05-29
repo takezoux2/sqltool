@@ -1,4 +1,4 @@
-
+package com.geishatokyo.sqltool.mysql
 
 
 object Diff{
