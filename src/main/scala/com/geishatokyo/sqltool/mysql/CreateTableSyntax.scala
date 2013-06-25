@@ -22,6 +22,10 @@ case class Table(name : String,createDefs : List[CreateDefinition]) extends Crea
     case index : NormalIndex => index
   })
 
+  lazy val uniqueIndexes : List[UniqueIndex] = createDefs.collect({
+    case unique : UniqueIndex => unique
+  })
+
   def index(name : String) = indexes.find(i => {
     i.name.toLowerCase == name.toLowerCase
   }).get
@@ -44,6 +48,7 @@ trait Index extends CreateDefinition{
   def columns : List[String]
 }
 case class NormalIndex(name : String , columns : List[String]) extends Index
+case class UniqueIndex(name : String , columns : List[String]) extends Index
 case class PrimaryKey(columns : List[String]) extends Index
 trait ColumnOption
 

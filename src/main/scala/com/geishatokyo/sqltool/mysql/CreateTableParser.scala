@@ -43,7 +43,7 @@ object CreateTableParser extends RegexParsers{
     }
   }
 
-  def createDefinition = (primaryKeyDefinition | indexDefinition | columnDefinition )
+  def createDefinition = (primaryKeyDefinition | indexDefinition | uniqueKeyDefinition | columnDefinition )
 
   def columnDefinition = word ~ dataTypeChars ~ rep(columnOption) ^^ {
     case name ~ dbType ~ options => {
@@ -75,6 +75,11 @@ object CreateTableParser extends RegexParsers{
   def indexDefinition = ("INDEX" | "KEY") ~> word ~ opt(word) ~ "(" ~ word ~ rep( "," ~> word) ~ ")" ^^ {
     case indexName ~ indexType ~ "(" ~ col ~ restCols ~ ")" => {
       NormalIndex(indexName,col :: restCols)
+    }
+  }
+  def uniqueKeyDefinition = "UNIQUE" ~> "KEY" ~> word ~ "(" ~ rep1(word, "," ~> word) ~ ")" ^^ {
+    case uniqueKeyName ~ "(" ~ cols ~ ")" => {
+      UniqueIndex(uniqueKeyName,cols)
     }
   }
 
